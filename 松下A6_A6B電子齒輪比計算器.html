@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>松下 MINAS A6 / A6B 電子齒輪比計算器</title>
+  <style>
+    :root {
+      --primary: #0066b3;
+      --primary-dark: #004d8c;
+      --bg: #eef2f6;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --muted: #5a6a7a;
+      --success: #0a7a3e;
+      --danger: #c0392b;
+      --border: #cdd5de;
+      --radius: 8px;
+      --c-pr008: #6c3483;
+      --c-num: #1a7a4c;
+      --c-den: #c0392b;
+      --c-ratio: #2471a3;
+      --c-travel: #7d6608;
+      --c-scale: #a04000;
+      --c-out: #1a5276;
+      --schematic: #4a6fa5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.35;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      height: 100vh;
+      padding: 4px 8px 2px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      gap: 4px;
+    }
+    header { text-align: center; flex-shrink: 0; }
+    header h1 {
+      font-size: clamp(0.88rem, 2vw, 1.12rem);
+      color: var(--primary);
+      font-weight: 700;
+    }
+    header p {
+      color: var(--muted);
+      font-size: clamp(0.58rem, 1.15vw, 0.7rem);
+    }
+    .main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 5px 10px;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: clamp(0.68rem, 1.35vw, 0.78rem);
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .card-title .num {
+      background: var(--primary);
+      color: #fff;
+      width: 15px; height: 15px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      flex-shrink: 0;
+    }
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 3px; }
+    .toggle-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 4px 3px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: clamp(0.62rem, 1.25vw, 0.75rem);
+      font-weight: 500;
+      transition: all 0.12s;
+      text-align: center;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .toggle-btn:hover { border-color: var(--primary); }
+    .toggle-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .scale-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 20px;
+      transition: 0.2s;
+    }
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 14px; width: 14px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .switch input:checked + .slider { background: var(--primary); }
+    .switch input:checked + .slider:before { transform: translateX(16px); }
+    .switch-label {
+      font-size: clamp(0.7rem, 1.35vw, 0.82rem);
+      font-weight: 600;
+    }
+    .switch-hint {
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px 6px;
+    }
+    .form-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 4px 6px;
+    }
+    @media (max-width: 520px) {
+      .form-grid, .form-grid-3, .form-grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+    .field { display: flex; flex-direction: column; gap: 1px; }
+    .field label {
+      font-size: clamp(0.58rem, 1.1vw, 0.68rem);
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .field input, .field select {
+      padding: 3px 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 5px;
+      font-size: clamp(0.78rem, 1.5vw, 0.88rem);
+      outline: none;
+      width: 100%;
+      background: #fff;
+    }
+    .field input:focus, .field select:focus { border-color: var(--primary); }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 3px;
+    }
+    .preset-btn {
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f5f8fb;
+      font-size: clamp(0.58rem, 1.1vw, 0.65rem);
+      cursor: pointer;
+      transition: all 0.12s;
+      color: var(--text);
+    }
+    .preset-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .hint { font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
+    .scale-params {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px dashed var(--border);
+    }
+    /* 示意圖區 */
+    .mech-with-schematic {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 8px;
+      align-items: start;
+    }
+    @media (max-width: 480px) {
+      .mech-with-schematic { grid-template-columns: 1fr; }
+      .schematic-box { max-width: 140px; margin: 0 auto; }
+    }
+    .schematic-box {
+      background: #eef5fb;
+      border: 1.5px solid #a8c4e0;
+      border-radius: 8px;
+      padding: 8px 6px 6px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .schematic-box svg {
+      width: 100%;
+      max-width: 150px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    .schematic-caption {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .result-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .result-box {
+      background: linear-gradient(135deg, #e8f4fc 0%, #f0f7ff 100%);
+      border: 1.5px solid #b8d4e8;
+      border-radius: 7px;
+      padding: 5px 9px;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      font-size: clamp(0.68rem, 1.3vw, 0.78rem);
+    }
+    .result-section {
+      margin-bottom: 4px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #d0e0f0;
+    }
+    .result-section:last-child { border-bottom: none; margin-bottom: 0; }
+    .result-section-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 2px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 1px 0;
+      gap: 5px;
+    }
+    .result-label { color: var(--muted); flex-shrink: 0; font-size: 0.95em; }
+    .result-value {
+      font-weight: 700;
+      font-family: "Consolas", "Courier New", monospace;
+      text-align: right;
+      word-break: break-all;
+    }
+    .v-travel { color: var(--c-travel); }
+    .v-ratio  { color: var(--c-ratio); }
+    .v-pr008  { color: var(--c-pr008); }
+    .v-num    { color: var(--c-num); }
+    .v-den    { color: var(--c-den); }
+    .v-scale  { color: var(--c-scale); }
+    .v-out    { color: var(--c-out); }
+    .round-hint { font-weight: 500; font-size: 0.88em; opacity: 0.85; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: clamp(0.62rem, 1.2vw, 0.72rem);
+      margin-top: 2px;
+    }
+    .status.ok { background: #d4edda; color: var(--success); }
+    .status.err { background: #f8d7da; color: var(--danger); }
+    .note {
+      font-size: clamp(0.56rem, 1.05vw, 0.65rem);
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .note strong { color: var(--text); }
+    .hidden { display: none !important; }
+    footer {
+      text-align: center;
+      font-size: 0.55rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    @media (max-height: 700px) {
+      body { padding: 2px 6px 1px; }
+      .container { gap: 3px; }
+      .card { padding: 4px 8px; }
+      .toggle-btn { padding: 3px 3px; }
+      .field input, .field select { padding: 2px 5px; }
+      .result-box { padding: 4px 7px; }
+      .mech-with-schematic { grid-template-columns: 1fr 130px; }
+      .schematic-box svg { max-width: 120px; }
+    }
+    @media (max-height: 580px) {
+      header p, .hint, footer { display: none; }
+      .schematic-box { max-width: 110px; }
+      .schematic-box svg { max-width: 100px; }
+      .presets { margin-top: 1px; }
+      .preset-btn { padding: 1px 4px; font-size: 0.55rem; }
+    }
+
+    /* ===== 跟隨系統：暗色模式 ===== */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #4da3e0;
+        --primary-dark: #7ec0f0;
+        --bg: #1a1d23;
+        --card: #252830;
+        --text: #e4e6eb;
+        --muted: #9aa0a8;
+        --success: #3dd68c;
+        --danger: #f07178;
+        --border: #3a3f4b;
+        --c-pr008: #c792ea;
+        --c-num: #7fd99a;
+        --c-den: #f07178;
+        --c-ratio: #82aaff;
+        --c-travel: #e0af68;
+        --c-scale: #ff9e64;
+        --c-out: #89ddff;
+      }
+      body { background: var(--bg); color: var(--text); }
+      .card {
+        background: var(--card);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+      }
+      .toggle-btn {
+        background: #2c303a;
+        border-color: var(--border);
+        color: var(--text);
+      }
+      .toggle-btn:hover { border-color: var(--primary); }
+      .toggle-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #0d1117;
+      }
+      .field input, .field select {
+        background: #1e222a;
+        border-color: var(--border);
+        color: var(--text);
+      }
+      .field input:focus, .field select:focus { border-color: var(--primary); }
+      .preset-btn {
+        background: #2c303a;
+        border-color: var(--border);
+        color: var(--text);
+      }
+      .preset-btn:hover {
+        background: var(--primary);
+        color: #0d1117;
+        border-color: var(--primary);
+      }
+      .result-box {
+        background: linear-gradient(135deg, #1e2a38 0%, #1a2430 100%);
+        border-color: #2a3a4a;
+      }
+      .result-section { border-bottom-color: #2a3a4a; }
+      .status.ok { background: #1a3d2e; color: var(--success); }
+      .status.err { background: #3d1a1e; color: var(--danger); }
+      .schematic-box {
+        background: #1e2430;
+        border-color: #3a4a5a;
+      }
+      .slider { background: #4a5060; }
+      .switch input:checked + .slider { background: var(--primary); }
+      footer { color: var(--muted); }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>松下 MINAS A6 / A6B 電子齒輪比計算器</h1>
+      <p>單位：mm｜編碼器 23-bit = 8,388,608｜可另加光學尺全閉環</p>
+    </header>
+
+    <div class="main">
+      <div class="row2">
+        <div class="card">
+          <div class="card-title"><span class="num">1</span> 伺服系列</div>
+          <div class="toggle-group" id="seriesGroup">
+            <button class="toggle-btn active" data-val="A6">A6 / A6N</button>
+            <button class="toggle-btn" data-val="A6B">A6B</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="num">2</span> 機構樣式</div>
+          <div class="toggle-group" id="mechGroup">
+            <button class="toggle-btn active" data-val="screw">螺桿</button>
+            <button class="toggle-btn" data-val="rack">齒規／皮帶</button>
+            <button class="toggle-btn" data-val="roller">滾輪</button>
+            <button class="toggle-btn" data-val="rotary">旋轉軸</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 光學尺開關 -->
+      <div class="card">
+        <div class="scale-toggle-row">
+          <label class="switch">
+            <input type="checkbox" id="useScale">
+            <span class="slider"></span>
+          </label>
+          <span class="switch-label">使用光學尺（全閉環）</span>
+          <span class="switch-hint">開：Pr0.01=6，以尺刻度計算｜關：編碼器 8,388,608</span>
+        </div>
+        <div id="scaleParams" class="scale-params hidden">
+          <div class="form-grid-4">
+            <div class="field">
+              <label>光學尺解析度 (μm/pulse)</label>
+              <input type="number" id="scale-res" value="0.05" step="any" min="0.001">
+            </div>
+            <div class="field">
+              <label>上位發送 (μm/pulse)</label>
+              <input type="number" id="scale-cmd" value="1" step="any" min="0.001">
+            </div>
+            <div class="field">
+              <label>上位接收 (μm/pulse)</label>
+              <input type="number" id="scale-fb" value="1" step="any" min="0.001">
+            </div>
+            <div class="field">
+              <label>Pr3.23 尺類型</label>
+              <select id="scale-type">
+                <option value="0">0 = ABZ 相並行</option>
+                <option value="1">1 = 序列（增量）</option>
+                <option value="2" selected>2 = 序列（絕對）</option>
+              </select>
+            </div>
+          </div>
+          <div class="presets">
+            <button class="preset-btn" onclick="setScaleRes(0.05)">尺0.05μm</button>
+            <button class="preset-btn" onclick="setScaleRes(0.1)">尺0.1μm</button>
+            <button class="preset-btn" onclick="setScaleRes(0.5)">尺0.5μm</button>
+            <button class="preset-btn" onclick="setScaleRes(1)">尺1μm</button>
+            <button class="preset-btn" onclick="setScaleCmd(1)">發送1μm</button>
+            <button class="preset-btn" onclick="setScaleCmd(0.5)">發送0.5μm</button>
+            <button class="preset-btn" onclick="setScaleFb(1)">接收1μm</button>
+            <button class="preset-btn" onclick="loadScaleExample()">範例 0.05μm/1μm</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="num">3</span> 機構參數 ＋ 精度</div>
+
+        <!-- 螺桿 -->
+        <div id="panel-screw" class="mech-panel">
+          <div class="mech-with-schematic">
+            <div>
+              <div class="form-grid">
+                <div class="field">
+                  <label>螺距／導程 (mm/rev)</label>
+                  <input type="number" id="screw-lead" value="10" step="any" min="0.001">
+                </div>
+                <div class="field">
+                  <label>減速比 (馬達/負載)</label>
+                  <input type="number" id="screw-ratio" value="1" step="any" min="0.001">
+                </div>
+                <div class="field" id="prec-field-screw">
+                  <label>1 脈衝移動量 (mm)</label>
+                  <input type="number" id="precision" value="0.01" step="any" min="0.000001">
+                </div>
+              </div>
+              <div class="presets" id="presets-screw">
+                <button class="preset-btn" onclick="setScrew(5,1)">導程5</button>
+                <button class="preset-btn" onclick="setScrew(10,1)">導程10</button>
+                <button class="preset-btn" onclick="setScrew(20,1)">導程20</button>
+                <button class="preset-btn" onclick="setScrew(10,3)">導程10+減速3</button>
+                <button class="preset-btn" onclick="setScrew(5,5)">導程5+減速5</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.0005)">0.5μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.001)">1μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.01)">0.01mm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.1)">0.1mm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(1)">1mm</button>
+              </div>
+            </div>
+                                    <div class="schematic-box">
+              <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 馬達 = 圓 + M -->
+                <circle cx="28" cy="45" r="18" fill="#5b8db8" stroke="#2c5a8a" stroke-width="1.5"/>
+                <text x="28" y="50" font-size="12" fill="#fff" text-anchor="middle" font-weight="bold">M</text>
+                <!-- 聯軸 / 軸 -->
+                <line x1="46" y1="45" x2="58" y2="45" stroke="#555" stroke-width="3"/>
+                <!-- 螺桿 -->
+                <line x1="58" y1="45" x2="140" y2="45" stroke="#c47a2a" stroke-width="5"/>
+                <path d="M60 38 L66 52 M70 38 L76 52 M80 38 L86 52 M90 38 L96 52 M100 38 L106 52 M110 38 L116 52 M120 38 L126 52" stroke="#e89a3c" stroke-width="2"/>
+                <!-- 螺帽 -->
+                <rect x="88" y="28" width="26" height="34" rx="2" fill="#7aab5a" stroke="#4a7a2a" stroke-width="1.3" opacity="0.92"/>
+                <text x="101" y="48" font-size="8" fill="#fff" text-anchor="middle">螺帽</text>
+                <!-- 移動箭頭 -->
+                <line x1="118" y1="18" x2="142" y2="18" stroke="#2c5a8a" stroke-width="1.5"/>
+                <polygon points="142,18 136,14 136,22" fill="#2c5a8a"/>
+                <text x="130" y="12" font-size="8" fill="#2c5a8a" text-anchor="middle">移動</text>
+                <text x="80" y="88" font-size="9" fill="#444" text-anchor="middle">導程 L mm / rev</text>
+                <text x="80" y="98" font-size="7" fill="#888" text-anchor="middle">馬達旋轉 → 直線移動</text>
+              </svg>
+              <div class="schematic-caption">滾珠螺桿</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 齒規 -->
+        <div id="panel-rack" class="mech-panel hidden">
+          <div class="mech-with-schematic">
+            <div>
+              <div class="form-grid">
+                <div class="field">
+                  <label>齒距 (mm)</label>
+                  <input type="number" id="rack-pitch" value="5" step="any" min="0.001">
+                </div>
+                <div class="field">
+                  <label>齒數</label>
+                  <input type="number" id="rack-teeth" value="25" step="1" min="1">
+                </div>
+                <div class="field">
+                  <label>減速比 (馬達/負載)</label>
+                  <input type="number" id="rack-ratio" value="1" step="any" min="0.001">
+                </div>
+                <div class="field prec-field">
+                  <label>1 脈衝移動量 (mm)</label>
+                  <input type="number" id="precision-rack" value="0.01" step="any" min="0.000001" class="prec-input">
+                </div>
+              </div>
+              <p class="hint">一圈移動量 = 齒距 × 齒數</p>
+              <div class="presets">
+                <button class="preset-btn" onclick="setRack(5,20,1)">5×20</button>
+                <button class="preset-btn" onclick="setRack(5,25,1)">5×25</button>
+                <button class="preset-btn" onclick="setRack(5,30,1)">5×30</button>
+                <button class="preset-btn" onclick="setRack(8,20,1)">8×20</button>
+                <button class="preset-btn" onclick="setRack(5,25,3)">5×25+減速3</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.0005)">0.5μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.001)">1μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.01)">0.01mm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.1)">0.1mm</button>
+              </div>
+            </div>
+                                    <div class="schematic-box">
+              <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 馬達在圓內，圓本身是齒輪 -->
+                <circle cx="50" cy="40" r="22" fill="#5b8db8" stroke="#2c5a8a" stroke-width="1.5"/>
+                <text x="50" y="45" font-size="12" fill="#fff" text-anchor="middle" font-weight="bold">M</text>
+                <!-- 輪齒 -->
+                <g stroke="#2c5a8a" stroke-width="2.5" stroke-linecap="round">
+                  <line x1="50" y1="18" x2="50" y2="24"/>
+                  <line x1="66" y1="24" x2="62" y2="28"/>
+                  <line x1="72" y1="40" x2="66" y2="40"/>
+                  <line x1="66" y1="56" x2="62" y2="52"/>
+                  <line x1="50" y1="62" x2="50" y2="56"/>
+                  <line x1="34" y1="56" x2="38" y2="52"/>
+                  <line x1="28" y1="40" x2="34" y2="40"/>
+                  <line x1="34" y1="24" x2="38" y2="28"/>
+                </g>
+                <!-- 齒條 -->
+                <rect x="78" y="58" width="72" height="12" fill="#7aab5a" stroke="#4a7a2a" stroke-width="1.3"/>
+                <g stroke="#4a7a2a" stroke-width="2">
+                  <line x1="84" y1="58" x2="84" y2="52"/>
+                  <line x1="93" y1="58" x2="93" y2="52"/>
+                  <line x1="102" y1="58" x2="102" y2="52"/>
+                  <line x1="111" y1="58" x2="111" y2="52"/>
+                  <line x1="120" y1="58" x2="120" y2="52"/>
+                  <line x1="129" y1="58" x2="129" y2="52"/>
+                  <line x1="138" y1="58" x2="138" y2="52"/>
+                </g>
+                <line x1="95" y1="80" x2="135" y2="80" stroke="#2c5a8a" stroke-width="1.5"/>
+                <polygon points="135,80 129,76 129,84" fill="#2c5a8a"/>
+                <text x="115" y="92" font-size="8" fill="#2c5a8a" text-anchor="middle">移動</text>
+                <text x="80" y="100" font-size="8" fill="#444" text-anchor="middle">周長 = 齒距 × 齒數</text>
+              </svg>
+              <div class="schematic-caption">齒輪 × 齒條</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 滾輪 -->
+        <div id="panel-roller" class="mech-panel hidden">
+          <div class="mech-with-schematic">
+            <div>
+              <div class="form-grid">
+                <div class="field">
+                  <label>滾輪直徑 (mm)</label>
+                  <input type="number" id="roller-dia" value="10" step="any" min="0.001">
+                </div>
+                <div class="field">
+                  <label>減速比 (馬達/負載)</label>
+                  <input type="number" id="roller-ratio" value="1" step="any" min="0.001">
+                </div>
+                <div class="field prec-field">
+                  <label>1 脈衝移動量 (mm)</label>
+                  <input type="number" id="precision-roller" value="0.01" step="any" min="0.000001" class="prec-input">
+                </div>
+              </div>
+              <p class="hint">一圈移動量 = π × 直徑</p>
+              <div class="presets">
+                <button class="preset-btn" onclick="setRoller(10,1)">Ø10</button>
+                <button class="preset-btn" onclick="setRoller(20,1)">Ø20</button>
+                <button class="preset-btn" onclick="setRoller(30,1)">Ø30</button>
+                <button class="preset-btn" onclick="setRoller(50,1)">Ø50</button>
+                <button class="preset-btn" onclick="setRoller(20,5)">Ø20+減速5</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.0005)">0.5μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.001)">1μm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.01)">0.01mm</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.1)">0.1mm</button>
+              </div>
+            </div>
+                                    <div class="schematic-box">
+              <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 馬達在圓內，圓 = 滾輪 -->
+                <circle cx="70" cy="42" r="26" fill="#5b8db8" stroke="#2c5a8a" stroke-width="2"/>
+                <text x="70" y="47" font-size="14" fill="#fff" text-anchor="middle" font-weight="bold">M</text>
+                <!-- 直徑虛線 -->
+                <line x1="70" y1="16" x2="70" y2="68" stroke="#c47a2a" stroke-width="1.2" stroke-dasharray="3,2"/>
+                <line x1="44" y1="42" x2="96" y2="42" stroke="#c47a2a" stroke-width="1.2" stroke-dasharray="3,2"/>
+                <text x="70" y="12" font-size="10" fill="#c47a2a" text-anchor="middle" font-weight="bold">ØD</text>
+                <!-- 地面 -->
+                <line x1="30" y1="72" x2="140" y2="72" stroke="#7aab5a" stroke-width="5"/>
+                <line x1="100" y1="58" x2="130" y2="58" stroke="#2c5a8a" stroke-width="1.5"/>
+                <polygon points="130,58 124,54 124,62" fill="#2c5a8a"/>
+                <text x="115" y="52" font-size="8" fill="#2c5a8a" text-anchor="middle">移動</text>
+                <text x="80" y="90" font-size="9" fill="#444" text-anchor="middle">一圈 = π × D</text>
+                <text x="80" y="99" font-size="7" fill="#888" text-anchor="middle">滾輪即馬達輸出軸</text>
+              </svg>
+              <div class="schematic-caption">摩擦滾輪</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 旋轉軸 -->
+        <div id="panel-rotary" class="mech-panel hidden">
+          <div class="mech-with-schematic">
+            <div>
+              <div class="form-grid">
+                <div class="field">
+                  <label>目標角度 (°/rev)</label>
+                  <input type="number" id="rotary-angle" value="360" step="any" min="0.001">
+                </div>
+                <div class="field">
+                  <label>減速比 (馬達/負載)</label>
+                  <input type="number" id="rotary-ratio" value="1" step="any" min="0.001">
+                </div>
+                <div class="field prec-field">
+                  <label>1 脈衝角度 (°)</label>
+                  <input type="number" id="precision-rotary" value="0.01" step="any" min="0.000001" class="prec-input">
+                </div>
+              </div>
+              <div class="presets">
+                <button class="preset-btn" onclick="setRotary(360,1)">1:1</button>
+                <button class="preset-btn" onclick="setRotary(360,3)">減速3</button>
+                <button class="preset-btn" onclick="setRotary(360,5)">減速5</button>
+                <button class="preset-btn" onclick="setRotary(360,10)">減速10</button>
+                <button class="preset-btn" onclick="setRotary(360,11)">減速11</button>
+                <button class="preset-btn" onclick="setRotary(360,50)">減速50</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.001)">0.001°</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.01)">0.01°</button>
+                <button class="preset-btn prec-preset" onclick="setPrecision(0.1)">0.1°</button>
+              </div>
+            </div>
+                                    <div class="schematic-box">
+              <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- 馬達在圓內 -->
+                <circle cx="28" cy="42" r="16" fill="#5b8db8" stroke="#2c5a8a" stroke-width="1.5"/>
+                <text x="28" y="47" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">M</text>
+                <line x1="44" y1="42" x2="54" y2="42" stroke="#555" stroke-width="2.5"/>
+                <!-- 減速箱 -->
+                <rect x="54" y="28" width="26" height="28" rx="3" fill="#d0dce8" stroke="#2c5a8a" stroke-width="1.3"/>
+                <text x="67" y="41" font-size="8" fill="#2c5a8a" text-anchor="middle">減速</text>
+                <text x="67" y="51" font-size="8" fill="#2c5a8a" text-anchor="middle">i</text>
+                <line x1="80" y1="42" x2="92" y2="42" stroke="#555" stroke-width="2.5"/>
+                <!-- 負載圓盤 -->
+                <circle cx="118" cy="42" r="22" fill="#f5e6c8" stroke="#c47a2a" stroke-width="2"/>
+                <circle cx="118" cy="42" r="4" fill="#c47a2a"/>
+                <line x1="118" y1="42" x2="136" y2="30" stroke="#c47a2a" stroke-width="2"/>
+                <path d="M134 28 A22 22 0 0 1 140 42" fill="none" stroke="#7aab5a" stroke-width="2"/>
+                <text x="146" y="30" font-size="10" fill="#7aab5a" text-anchor="middle">θ</text>
+                <text x="80" y="84" font-size="9" fill="#444" text-anchor="middle">負載轉一圈 = 360°</text>
+                <text x="80" y="96" font-size="7" fill="#888" text-anchor="middle">馬達轉 i 圈 → 負載 1 圈</text>
+              </svg>
+              <div class="schematic-caption">旋轉軸</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card result-card">
+        <div class="card-title"><span class="num">4</span> 計算結果</div>
+        <div class="result-box" id="resultBox"></div>
+      </div>
+    </div>
+
+    <footer>無光學尺：編碼器 8388608｜有光學尺：尺刻度 + Pr0.01=6｜括號內四捨五入｜示意圖為純 SVG 不依賴外部圖檔<br>版本 v1.1.0　｜　2026-10-13　｜　支援系統明／暗色</footer>
+  </div>
+
+  <script>
+    const ENCODER = 8388608;
+    let series = 'A6';
+    let mech = 'screw';
+    let useScale = false;
+
+    document.getElementById('useScale').addEventListener('change', function() {
+      useScale = this.checked;
+      document.getElementById('scaleParams').classList.toggle('hidden', !useScale);
+      document.querySelectorAll('.prec-field, #prec-field-screw').forEach(el => {
+        el.style.display = useScale ? 'none' : '';
+      });
+      document.querySelectorAll('.prec-preset').forEach(el => {
+        el.style.display = useScale ? 'none' : '';
+      });
+      calc();
+    });
+
+    function getPrecision() {
+      if (mech === 'screw') return parseFloat(document.getElementById('precision').value) || 0;
+      if (mech === 'rack') return parseFloat(document.getElementById('precision-rack').value) || 0;
+      if (mech === 'roller') return parseFloat(document.getElementById('precision-roller').value) || 0;
+      if (mech === 'rotary') return parseFloat(document.getElementById('precision-rotary').value) || 0;
+      return 0;
+    }
+    function setPrecision(v) {
+      document.getElementById('precision').value = v;
+      document.querySelectorAll('.prec-input').forEach(el => el.value = v);
+      calc();
+    }
+    function setScaleRes(v) { document.getElementById('scale-res').value = v; calc(); }
+    function setScaleCmd(v) { document.getElementById('scale-cmd').value = v; calc(); }
+    function setScaleFb(v) { document.getElementById('scale-fb').value = v; calc(); }
+    function loadScaleExample() {
+      document.getElementById('scale-res').value = 0.05;
+      document.getElementById('scale-cmd').value = 1;
+      document.getElementById('scale-fb').value = 1;
+      if (mech === 'screw') document.getElementById('screw-lead').value = 20;
+      calc();
+    }
+
+    document.querySelectorAll('#seriesGroup .toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#seriesGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        series = btn.dataset.val;
+        calc();
+      });
+    });
+
+    document.querySelectorAll('#mechGroup .toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#mechGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mech = btn.dataset.val;
+        document.querySelectorAll('.mech-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById('panel-' + mech).classList.remove('hidden');
+        calc();
+      });
+    });
+
+    document.querySelectorAll('input, select').forEach(inp => {
+      inp.addEventListener('input', calc);
+      inp.addEventListener('change', calc);
+    });
+
+    function setScrew(lead, ratio) {
+      document.getElementById('screw-lead').value = lead;
+      document.getElementById('screw-ratio').value = ratio;
+      calc();
+    }
+    function setRack(pitch, teeth, ratio) {
+      document.getElementById('rack-pitch').value = pitch;
+      document.getElementById('rack-teeth').value = teeth;
+      document.getElementById('rack-ratio').value = ratio;
+      calc();
+    }
+    function setRoller(dia, ratio) {
+      document.getElementById('roller-dia').value = dia;
+      document.getElementById('roller-ratio').value = ratio;
+      calc();
+    }
+    function setRotary(angle, ratio) {
+      document.getElementById('rotary-angle').value = angle;
+      document.getElementById('rotary-ratio').value = ratio;
+      calc();
+    }
+
+    function getTravelPerRev() {
+      switch (mech) {
+        case 'screw':
+          return parseFloat(document.getElementById('screw-lead').value) || 0;
+        case 'rack': {
+          const p = parseFloat(document.getElementById('rack-pitch').value) || 0;
+          const t = parseFloat(document.getElementById('rack-teeth').value) || 0;
+          return p * t;
+        }
+        case 'roller': {
+          const d = parseFloat(document.getElementById('roller-dia').value) || 0;
+          return Math.PI * d;
+        }
+        case 'rotary':
+          return parseFloat(document.getElementById('rotary-angle').value) || 0;
+        default: return 0;
+      }
+    }
+
+    function getReduction() {
+      switch (mech) {
+        case 'screw':  return parseFloat(document.getElementById('screw-ratio').value) || 1;
+        case 'rack':   return parseFloat(document.getElementById('rack-ratio').value) || 1;
+        case 'roller': return parseFloat(document.getElementById('roller-ratio').value) || 1;
+        case 'rotary': return parseFloat(document.getElementById('rotary-ratio').value) || 1;
+        default: return 1;
+      }
+    }
+
+    function formatWithRound(n) {
+      if (!isFinite(n)) return '—';
+      const isInt = Math.abs(n - Math.round(n)) < 1e-6;
+      if (isInt) return Math.round(n).toLocaleString('en-US');
+      const raw = parseFloat(n.toPrecision(10)).toString();
+      return raw + ' <span class="round-hint">(' + Math.round(n).toLocaleString('en-US') + ')</span>';
+    }
+
+    function formatNum(n) {
+      if (!isFinite(n)) return '—';
+      if (Math.abs(n - Math.round(n)) < 1e-9) return Math.round(n).toLocaleString('en-US');
+      return parseFloat(n.toPrecision(8)).toString();
+    }
+
+    /** 若分母非整數，建議分子分母同乘整數化（實務常見） */
+    function suggestIntegerPair(num, den) {
+      if (Math.abs(den - Math.round(den)) < 1e-6 && Math.abs(num - Math.round(num)) < 1e-6) {
+        return null; // already integer
+      }
+      // try multiply by 2..1000 to get near-integers
+      for (let k = 2; k <= 1000; k++) {
+        const n2 = num * k, d2 = den * k;
+        if (Math.abs(n2 - Math.round(n2)) < 0.01 && Math.abs(d2 - Math.round(d2)) < 0.01) {
+          return { num: Math.round(n2), den: Math.round(d2), k: k };
+        }
+      }
+      return { num: Math.round(num), den: Math.round(den), k: 1 };
+    }
+
+    function calc() {
+      const box = document.getElementById('resultBox');
+      const travel = getTravelPerRev();
+      const red = getReduction();
+      const unit = mech === 'rotary' ? '°' : 'mm';
+
+      if (travel <= 0 || red <= 0) {
+        box.innerHTML = '<p style="color:var(--danger)">請輸入有效的正數參數</p>';
+        return;
+      }
+
+      // ========== 有光學尺 ==========
+      if (useScale) {
+        if (mech === 'rotary') {
+          box.innerHTML = '<p style="color:var(--danger)">光學尺全閉環適用直線機構（螺桿／齒規／滾輪）。旋轉軸請關閉光學尺。</p>';
+          return;
+        }
+        const scaleUm = parseFloat(document.getElementById('scale-res').value) || 0;
+        const cmdUm = parseFloat(document.getElementById('scale-cmd').value) || 0;
+        const fbUm = parseFloat(document.getElementById('scale-fb').value) || 0;
+        const scaleType = document.getElementById('scale-type').value;
+        if (scaleUm <= 0 || cmdUm <= 0 || fbUm <= 0) {
+          box.innerHTML = '<p style="color:var(--danger)">請輸入有效的光學尺／上位解析度</p>';
+          return;
+        }
+
+        const travelUm = (travel / red) * 1000;
+        const pr325 = travelUm / scaleUm;
+        const pr010 = travelUm / cmdUm;
+        const pr009 = pr325;
+        const gearRatio = pr009 / pr010;
+        const outPulses = travelUm / fbUm;
+        const pr503 = (Math.abs(outPulses - Math.round(outPulses)) < 1e-6) ? 0 : Math.round(outPulses);
+        const isOk = gearRatio >= (1/1000) && gearRatio <= 8000;
+        const intPair = suggestIntegerPair(pr009, pr010);
+        const intPair325 = suggestIntegerPair(ENCODER, pr325);
+
+        let html = '';
+        html += '<div class="result-section"><div class="result-section-title">模式</div>';
+        html += '<div class="result-row"><span class="result-label">Pr0.01　控制模式</span><span class="result-value v-scale"><strong>6　（全閉迴路）</strong></span></div>';
+        html += '<div class="result-row"><span class="result-label">馬達轉一圈移動</span><span class="result-value v-travel">' + formatNum(travelUm) + ' μm（' + formatNum(travelUm/1000) + ' mm）</span></div>';
+        html += '<div class="result-row"><span class="result-label">光學尺一圈計數</span><span class="result-value v-scale">' + formatWithRound(pr325) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">電子齒輪比</span><span class="result-value v-ratio">' + formatNum(gearRatio) + '</span></div>';
+        html += '</div>';
+
+        html += '<div class="result-section"><div class="result-section-title">外部位移傳感器</div>';
+        html += '<div class="result-row"><span class="result-label">Pr3.23　尺類型</span><span class="result-value v-scale">' + scaleType + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr3.24　分頻分子</span><span class="result-value v-num">' + ENCODER.toLocaleString('en-US') + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr3.25　分頻分母</span><span class="result-value v-den">' + formatWithRound(pr325) + '</span></div>';
+        if (intPair325 && intPair325.k > 1) {
+          html += '<div class="result-row"><span class="result-label">　↳ 整數化建議</span><span class="result-value v-den">分子×' + intPair325.k + '=' + intPair325.num.toLocaleString('en-US') + '　分母×' + intPair325.k + '=' + intPair325.den.toLocaleString('en-US') + '</span></div>';
+        }
+        html += '<div class="result-row"><span class="result-label">Pr3.26　方向反轉</span><span class="result-value">0（預設）/ 1=反轉　※手推馬達確認方向</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr3.27　Z相斷線檢出</span><span class="result-value">0=有效（預設）</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr3.28　混合偏差過大</span><span class="result-value">依機構設定　※設錯易 Err25.0</span></div>';
+        html += '</div>';
+
+        if (series === 'A6') {
+          html += '<div class="result-section"><div class="result-section-title">電子齒輪（指令）</div>';
+          html += '<div class="result-row"><span class="result-label">Pr0.08</span><span class="result-value v-pr008">0（全閉環時無效，用分子分母）</span></div>';
+          html += '<div class="result-row"><span class="result-label">Pr0.09　分子</span><span class="result-value v-num">' + formatWithRound(pr009) + '</span></div>';
+          html += '<div class="result-row"><span class="result-label">Pr0.10　分母</span><span class="result-value v-den">' + formatWithRound(pr010) + '</span></div>';
+          if (intPair && intPair.k > 1) {
+            html += '<div class="result-row"><span class="result-label">　↳ 整數化建議</span><span class="result-value v-num">Pr0.09=' + intPair.num.toLocaleString('en-US') + '　Pr0.10=' + intPair.den.toLocaleString('en-US') + '（×' + intPair.k + '）</span></div>';
+          }
+          html += '</div>';
+        } else {
+          html += '<div class="result-section"><div class="result-section-title">物件字典（A6B）</div>';
+          html += '<div class="result-row"><span class="result-label">608Fh:01h Encoder increments</span><span class="result-value v-pr008">' + ENCODER.toLocaleString('en-US') + '</span></div>';
+          html += '<div class="result-row"><span class="result-label">608Fh:02h Motor revolutions</span><span class="result-value">1</span></div>';
+          html += '<div class="result-row"><span class="result-label">6092h:01h Feed</span><span class="result-value v-pr008">' + ENCODER.toLocaleString('en-US') + '</span></div>';
+          html += '<div class="result-row"><span class="result-label">6092h:02h Driving shaft rev</span><span class="result-value">1</span></div>';
+          html += '<div class="result-row"><span class="result-label">6091h:01h 分子（Pr0.09）</span><span class="result-value v-num">' + formatWithRound(pr009) + '</span></div>';
+          html += '<div class="result-row"><span class="result-label">6091h:02h 分母（Pr0.10）</span><span class="result-value v-den">' + formatWithRound(pr010) + '</span></div>';
+          if (intPair && intPair.k > 1) {
+            html += '<div class="result-row"><span class="result-label">　↳ 整數化建議</span><span class="result-value v-num">' + intPair.num.toLocaleString('en-US') + ' / ' + intPair.den.toLocaleString('en-US') + '（×' + intPair.k + '）</span></div>';
+          }
+          html += '</div>';
+        }
+
+        html += '<div class="result-section"><div class="result-section-title">脈衝輸出（回授上位）</div>';
+        html += '<div class="result-row"><span class="result-label">Pr0.11　輸出脈衝/轉</span><span class="result-value v-out">' + formatWithRound(outPulses) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr0.12　輸出源選擇</span><span class="result-value v-out">2 或 3（外部光學尺）</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr5.03　輸出分頻分母</span><span class="result-value v-out">' + (pr503 === 0 ? '0（整數可保持0）' : formatWithRound(pr503)) + '</span></div>';
+        html += '</div>';
+
+        html += '<p class="note"><strong>注意：</strong>Pr3.24/Pr3.25 比例錯誤會觸發 <strong>Err25.0</strong>（混合偏差過大）。手推馬達確認編碼器與光學尺方向同號，否則設 Pr3.26=1。非整數時可分子分母同乘整數化。</p>';
+        html += '<div class="status ' + (isOk ? 'ok' : 'err') + '">' + (isOk ? '✓ 倍數正常（1/1000～8000）' : '✗ 異常 Err93.0 — 請調整參數') + '</div>';
+        box.innerHTML = html;
+        return;
+      }
+
+      // ========== 無光學尺 ==========
+      const prec = getPrecision();
+      if (prec <= 0) {
+        box.innerHTML = '<p style="color:var(--danger)">請輸入有效的 1 脈衝移動量</p>';
+        return;
+      }
+
+      const pr008 = (travel / prec) / red;
+      const numerator = ENCODER * red;
+      const denominator = travel / prec;
+      const gearRatio = numerator / denominator;
+      const isOk = gearRatio >= (1 / 1000) && gearRatio <= 8000;
+      const intPair = suggestIntegerPair(numerator, denominator);
+
+      let html = '';
+      html += '<div class="result-section"><div class="result-section-title">模式（半閉環）</div>';
+      html += '<div class="result-row"><span class="result-label">編碼器解析度</span><span class="result-value v-pr008">' + ENCODER.toLocaleString('en-US') + '</span></div>';
+      html += '<div class="result-row"><span class="result-label">馬達轉一圈負載移動</span><span class="result-value v-travel">' + formatNum(travel / red) + ' ' + unit + '</span></div>';
+      html += '<div class="result-row"><span class="result-label">電子齒輪比</span><span class="result-value v-ratio">' + formatNum(gearRatio) + '</span></div>';
+      html += '</div>';
+
+      if (series === 'A6') {
+        html += '<div class="result-row"><span class="result-label">Pr0.08（脈衝/轉）</span><span class="result-value v-pr008">' + formatWithRound(pr008) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr0.09 分子</span><span class="result-value v-num">' + formatWithRound(numerator) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">Pr0.10 分母</span><span class="result-value v-den">' + formatWithRound(denominator) + '</span></div>';
+        if (intPair && intPair.k > 1) {
+          html += '<div class="result-row"><span class="result-label">　↳ 整數化建議</span><span class="result-value v-num">Pr0.09=' + intPair.num.toLocaleString('en-US') + '　Pr0.10=' + intPair.den.toLocaleString('en-US') + '</span></div>';
+        }
+        html += '<p class="note"><strong>建議：</strong>可整除 → 設 Pr0.08；否則 Pr0.08=0，再用分子/分母。括號內為四捨五入整數。</p>';
+      } else {
+        html += '<div class="result-row"><span class="result-label">6092h:01h Feed</span><span class="result-value v-pr008">' + formatWithRound(numerator) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">6091h:01h 分子</span><span class="result-value v-num">' + formatWithRound(numerator) + '</span></div>';
+        html += '<div class="result-row"><span class="result-label">6091h:02h 分母</span><span class="result-value v-den">' + formatWithRound(denominator) + '</span></div>';
+        if (intPair && intPair.k > 1) {
+          html += '<div class="result-row"><span class="result-label">　↳ 整數化建議</span><span class="result-value v-num">' + intPair.num.toLocaleString('en-US') + ' / ' + intPair.den.toLocaleString('en-US') + '</span></div>';
+        }
+        html += '<p class="note"><strong>A6B：</strong>使用通訊型物件編輯器設定。括號內為四捨五入整數。</p>';
+      }
+
+      html += '<div class="status ' + (isOk ? 'ok' : 'err') + '">' + (isOk ? '✓ 倍數正常（1/1000～8000）' : '✗ 異常 Err93.0 — 請調整參數') + '</div>';
+      box.innerHTML = html;
+    }
+
+    calc();
+  </script>
+</body>
+</html>
